@@ -87,7 +87,7 @@
 <meta property="og:description" content="进程通信进程是系统独立调度核分配系统资源（CPU、内存）的基本单位，进程之间是相互独立的，每启动一个新的进程相当于把数据进行了一次克隆，子进程里的数据修改无法影响到主进程中的数据，不同子进程之间的数据也不能共享，这是多进程在使用中与多线程最明显的区别。所以并行应用常常需要在进程之间交换数据。Multiprocessing库有两个Communication Channel可以交换对象：队列(queu">
 <meta property="og:locale">
 <meta property="article:published_time" content="2021-04-16T08:27:46.000Z">
-<meta property="article:modified_time" content="2021-04-16T08:29:22.714Z">
+<meta property="article:modified_time" content="2021-04-16T13:37:14.830Z">
 <meta property="article:author" content="姬凌伟">
 <meta name="twitter:card" content="summary">
 
@@ -345,6 +345,24 @@
 <p>Process finished with exit code 0</p>
 </blockquote>
 <p>我们可以看到，和之前用queue不同，JoinableQueue在调用q.join()方法后，会等待其他消费者进程通知q.task_done()才阻塞完成，继续生产。</p>
+<h2 id="管道Pipe"><a href="#管道Pipe" class="headerlink" title="管道Pipe"></a>管道Pipe</h2><p>Pipe常用于两个进程，两个进程分别位于管道的两端 * Pipe方法返回（conn1,conn2）代表一个管道的两个端，管道的本质是在内存中开辟一个新的空间，对多个进程可见，在通信形式上形成一种约束，管道在信息传输上是以流的方式传输，先进先出原则。</p>
+<p>Pipe方法有duplex参数，默认为True，即全双工模式，若为FALSE，conn1只负责接收信息，conn2负责发送,需要程序调用 multiprocessing.Pipe(duplex) 来创建一个管道。该函数会返回两个 PipeConnection 对象，代表管道的两个连接端(一个管道有两个连接端，分别用于连接通信的两个进程)。</p>
+<ol>
+<li><p>如果duplex为True(默认)，则管道是双向的(即每个端同时可以收发信息)</p>
+</li>
+<li><p>如果duplex是False，那么管道是单向的：conn1只能用于接收消息，conn2只能用于发送消息。</p>
+</li>
+<li><p>默认情况下是双工(双向,即一端可以发消息同时可以收消息)</p>
+</li>
+</ol>
+<p>首先是双工模式的示例：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># encoding:utf-8</span></span><br><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">proc1</span>(<span class="params">pipe</span>):</span></span><br><span class="line">    pipe.send(<span class="string">&quot;hello&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;proc 1 : &quot;</span>, pipe.recv())</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">proc2</span>(<span class="params">pipe</span>):</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;proc 2 : &quot;</span>, pipe.recv())</span><br><span class="line">    pipe.send(<span class="string">&quot;hello too&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    <span class="comment"># 创建一个管道　这个管道是双向的</span></span><br><span class="line">    pipe = multiprocessing.Pipe()</span><br><span class="line"></span><br><span class="line">    <span class="comment"># pipe[0]　表示管道的一端，pipe[1] 表示管道的另外一端</span></span><br><span class="line">    <span class="comment"># 对pipe的某一端调用send方法来传送对象，在另外一端使用recv来接收</span></span><br><span class="line">    p1 = multiprocessing.Process(target=proc1, args=(pipe[<span class="number">0</span>],))</span><br><span class="line">    p2 = multiprocessing.Process(target=proc2, args=(pipe[<span class="number">1</span>],))</span><br><span class="line">    </span><br><span class="line">    p1.start()</span><br><span class="line">    p2.start()</span><br><span class="line">    p1.join()</span><br><span class="line">    p1.join()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;通信结束&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>proc 2 :  hello<br>proc 1 :  hello too<br>通信结束</p>
+<p>Process finished with exit code 0</p>
+</blockquote>
+<p>这里可以看到两个进程一直在互发消息。</p>
 
       
     </div>
@@ -500,7 +518,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1"><span class="nav-number">1.</span> <span class="nav-text">进程通信</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%AF%B9%E5%88%97Queue"><span class="nav-number">1.0.1.</span> <span class="nav-text">进程对列Queue</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E9%80%9A%E4%BF%A1"><span class="nav-number">1.</span> <span class="nav-text">进程通信</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%AF%B9%E5%88%97Queue"><span class="nav-number">1.0.1.</span> <span class="nav-text">进程对列Queue</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%A1%E9%81%93Pipe"><span class="nav-number">1.1.</span> <span class="nav-text">管道Pipe</span></a></li></ol></li></ol></div>
             
 
           </div>
