@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="TCP," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="TCP 传输控制协议(二、连接管理)引言TCP是一种面向连接的单播协议。在数据交换之前，双方必须先建立连接。TCP的服务模型是一个字节流。TCP会修复下层（如IP层，链路层等）产生的数据传输问题，对于数据交换来说，大致有三个方面的问题：丢包、重复和错误。为了解决这些问题，TCP引入了连接的概念。***可以说，UDP和TCP本质上最大的区别在于TCP需要维护连接。TCP由于要维护连接所以TCP是有状">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP 传输控制协议(二、连接管理)">
+<meta property="og:url" content="http://example.com/2021/09/04/network-2/index.html">
+<meta property="og:site_name" content="枫叶苑">
+<meta property="og:description" content="TCP 传输控制协议(二、连接管理)引言TCP是一种面向连接的单播协议。在数据交换之前，双方必须先建立连接。TCP的服务模型是一个字节流。TCP会修复下层（如IP层，链路层等）产生的数据传输问题，对于数据交换来说，大致有三个方面的问题：丢包、重复和错误。为了解决这些问题，TCP引入了连接的概念。***可以说，UDP和TCP本质上最大的区别在于TCP需要维护连接。TCP由于要维护连接所以TCP是有状">
+<meta property="og:locale">
+<meta property="og:image" content="https://i.imgur.com/qxOJWny.png">
+<meta property="article:published_time" content="2021-09-04T06:31:15.000Z">
+<meta property="article:modified_time" content="2021-09-16T02:31:23.650Z">
+<meta property="article:author" content="姬凌伟">
+<meta property="article:tag" content="TCP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/qxOJWny.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://example.com/2021/09/04/network-2/"/>
+
+
+
+
+
+  <title>TCP 传输控制协议(二、连接管理) | 枫叶苑</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">枫叶苑</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/09/04/network-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="枫叶苑">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">TCP 传输控制协议(二、连接管理)</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-09-04T14:31:15+08:00">
+                2021-09-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="TCP-传输控制协议-二、连接管理"><a href="#TCP-传输控制协议-二、连接管理" class="headerlink" title="TCP 传输控制协议(二、连接管理)"></a>TCP 传输控制协议(二、连接管理)</h1><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>TCP是一种<strong>面向连接</strong>的单播协议。在数据交换之前，双方必须先建立连接。TCP的服务模型是一个字节流。TCP会修复下层（如IP层，链路层等）产生的数据传输问题，对于数据交换来说，大致有三个方面的问题：丢包、重复和错误。为了解决这些问题，TCP引入了连接的概念。***可以说，UDP和TCP本质上最大的区别在于TCP需要维护连接。TCP由于要维护连接所以TCP是有状态的，相比于无状态的UDP，TCP在妥善处理多种TCP状态问题时需要面对大量的细节问题，比如连接的建立、终止和重启。这一章我们就来一起讨论关于TCP的连接管理。</p>
+<h2 id="TCP连接的建立与终止"><a href="#TCP连接的建立与终止" class="headerlink" title="TCP连接的建立与终止"></a>TCP连接的建立与终止</h2><p>一个TCP连接是有一个4元组构成的，简单来说就是一组IP和一组端口号。一个TCP连接通常分为三个阶段：启动、数据传输和退出。下面我们就对这三个阶段一步步讨论。</p>
+<img src="https://i.imgur.com/qxOJWny.png" alt="Imgur" style="zoom:67%;" />
+
+<p>​                                                                                                                        图 1</p>
+<p>在图1中的时间轴描绘了一个连接建立过程中的相关事宜。</p>
+<h3 id="连接建立"><a href="#连接建立" class="headerlink" title="连接建立"></a>连接建立</h3><h4 id="正常的连接建立流程（三次握手）"><a href="#正常的连接建立流程（三次握手）" class="headerlink" title="正常的连接建立流程（三次握手）"></a>正常的连接建立流程（三次握手）</h4><p>首先我们先讨论一个TCP连接建立的过程：</p>
+<ol>
+<li><p> 客户端发送一个SYN报文段，并指明自己想要连接的端口和它的客户端初始序列号（记为ISN(c)）。通常客户端还会借此发送一个或多个选项。客户端发送的这个SYN报文段称作段1。这个时候客户端进入SYN-SENT状态</p>
+</li>
+<li><p> 服务端收到SYN报文段后，进入LISTEN状态。服务端也发送自己的SYN报文段作为相应，并包含了它的 初始序列号（ISN(s)）。该段称为段2。为了确认客户的的SYN，服务器将其包含的ISN(c)数值加1后作为返回的ACK数值，然后进入SYN-RCVD状态。因此，每送一个SYN，序列号就会自动加1。这样如果出现丢失的情况，该SYN段将会重传。</p>
+</li>
+<li><p>客户端收到报文后，客户端进入ESTABLISHED状态，这个时候对于客户端来说已经是可以交换数据的状态了。为了确认服务器的SYN，客户的将ISN(s)的数值加1后最为返回的ACK值，这称为段3。</p>
+<ul>
+<li>  服务端收到后，进入ESTABLISHED状态，这个时候双方就进入正式的数据交换过程。</li>
+</ul>
+</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">    TCP A                                                TCP B</span><br><span class="line"></span><br><span class="line">1.  CLOSED                                               LISTEN</span><br><span class="line"></span><br><span class="line">2.  SYN-SENT    --&gt; &lt;SEQ=100&gt;&lt;CTL=SYN&gt;               --&gt; SYN-RECEIVED</span><br><span class="line"></span><br><span class="line">3.  ESTABLISHED &lt;-- &lt;SEQ=300&gt;&lt;ACK=101&gt;&lt;CTL=SYN,ACK&gt;  &lt;-- SYN-RECEIVED</span><br><span class="line"></span><br><span class="line">4.  ESTABLISHED --&gt; &lt;SEQ=101&gt;&lt;ACK=301&gt;&lt;CTL=ACK&gt;       --&gt; ESTABLISHED</span><br><span class="line"></span><br><span class="line">5.  ESTABLISHED --&gt; &lt;SEQ=101&gt;&lt;ACK=301&gt;&lt;CTL=ACK&gt;&lt;DATA&gt; --&gt; ESTABLISHED</span><br><span class="line"></span><br><span class="line">        Basic 3-Way Handshake for Connection Synchronization</span><br><span class="line">					在[rfc793]中对于三次握手的图示</span><br></pre></td></tr></table></figure>
+
+<p>通过上面这三个报文段就能够正常建立一个TCP连接，也称为三次握手。三次握手的目的不仅在于让通信双方连接一个连接正在建立，还在于利用数据报的选项来交换特殊信息，交换<strong>初始序列号ISN</strong>。一般来说，三次握手是首个发送SYN的一方被认为主动打开一个连接，我们一般称之为客户端，而被动打开连接的一方我们称之为服务端。但是有一种特殊情况是两个端点同时发起连接，下面会讨论这种特殊的情况。</p>
+<h4 id="同时打开-Simultaneous-initiation"><a href="#同时打开-Simultaneous-initiation" class="headerlink" title="同时打开 Simultaneous initiation"></a>同时打开 Simultaneous initiation</h4><p>两个端点同时给对方发送主动建立连接的情况不多见，但是在特定的场景下是有机会出现的。前提是两个端点都有对方的ip和端口，就有可能发生这种情况，对于同时打开，需要四个报文段。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">    TCP A                                            TCP B</span><br><span class="line"></span><br><span class="line">1.  CLOSED                                           CLOSED</span><br><span class="line"></span><br><span class="line">2.  SYN-SENT     --&gt; &lt;SEQ=100&gt;&lt;CTL=SYN&gt;              ...</span><br><span class="line"></span><br><span class="line">3.  SYN-RECEIVED &lt;-- &lt;SEQ=300&gt;&lt;CTL=SYN&gt;              &lt;-- SYN-SENT</span><br><span class="line"></span><br><span class="line">4.               ... &lt;SEQ=100&gt;&lt;CTL=SYN&gt;              --&gt; SYN-RECEIVED</span><br><span class="line"></span><br><span class="line">5.  SYN-RECEIVED --&gt; &lt;SEQ=100&gt;&lt;ACK=301&gt;&lt;CTL=SYN,ACK&gt; ...</span><br><span class="line"></span><br><span class="line">6.  ESTABLISHED  &lt;-- &lt;SEQ=300&gt;&lt;ACK=101&gt;&lt;CTL=SYN,ACK&gt; &lt;-- SYN-RECEIVED</span><br><span class="line"></span><br><span class="line">7.               ... &lt;SEQ=101&gt;&lt;ACK=301&gt;&lt;CTL=ACK&gt;     --&gt; ESTABLISHED</span><br><span class="line"></span><br><span class="line">              Simultaneous Connection Synchronization</span><br></pre></td></tr></table></figure>
+
+<p>从上面的图可以看出，同时打开每个TCP都是从CLOSED 到 SYN-SENT 再到 SYN-RECEIVED 到已确立的。</p>
+<blockquote>
+<p>这里说一下我个人关于三次握手的一些想法。大家对这个流程想必都不陌生，但是我感觉很多人在描述这个过程的时候并没有说出关键的信息，就是三次握手每次是为了什么。首先握手的目的就是双方确认对方的收发能力，对于两端来说要确认的东西是一样的，<strong>确认对方能接受自己的信息，能给自己发送信息。</strong></p>
+<ul>
+<li><p>  客户端给服务端发消息的时候，这时候服务端<strong>知道客户端有发送消息的能力</strong>。</p>
+</li>
+<li><p>  服务端给客户端发送消息的时候，客户端就知道<strong>服务端有接受消息</strong>和<strong>发送信息的能力</strong>。</p>
+</li>
+<li><p>  客户端再次给服务端发送消息，这时候服务端就<strong>知道客户端有接受信息的能力</strong>（通过ACK知道消息是应答而不是重复发）。</p>
+</li>
+</ul>
+<p>不管是哪一端，收到对方的消息就是代表对面有正常发送消息的能力，收到对方的ACK = 己方发送的SEQ + 1就证明对方是有正常的接收能力。</p>
+<p>这也很好解释为什么不是四次握手，因为三次握手就已经足够让两端都<strong>确认对方有正常的收发消息的能力</strong>。</p>
+<p>当然在三次握手的过程中还处理了很多别的细节问题，不过在我看来，三次握手本质上要做的事情只有一件，就是确认对方的收发能力。</p>
+<p>再来看同时打开为什么是四次，其实就是接收到对方正确的ACK回复就证明对方有正常的收发能力。</p>
+</blockquote>
+<blockquote>
+<p>这里举一个例子，如果没有三次握手有可能发生什么情况：</p>
+<p><em><strong>TCP A</strong></em>发出的第一个连接请求报文段并没有丢失，而是在某个网络结点长时间的滞留了，以致延误到连接释放以后的某个时间才到达<em><strong>TCP B</strong></em>。本来这是一个早已失效的报文段。但<em><strong>TCP B</strong></em>收到此失效的连接请求报文段后，就误认为是<em><strong>TCP A</strong></em>再次发出的一个新的连接请求。于是就向<em><strong>TCP A</strong></em>发出确认报文段，同意建立连接。</p>
+<p>假设不采用“三次握手”，那么只要<em><strong>TCP B</strong></em>发出确认，新的连接就建立了。由于是<em><strong>TCP A</strong></em>发送的请求报文段滞留后才到达服务端，而现在<em><strong>TCP A</strong></em>并没有发出新的建立连接的请求，因此不会理睬<em><strong>TCP B</strong></em>的确认，也不会向<em><strong>TCP B</strong></em>发送数据（<strong>此时的***</strong>TCP A<em>*<em><strong>对于 <em><strong><strong>TCP B</strong></strong></em> 其实是没有接收能力的，因为接收到什么都是扔掉的</strong>）。但</em>*</em>TCP B<em><strong>却以为新的连接已经建立，并一直等待</strong></em>TCP A<em><strong>发来数据。这样，</strong></em>TCP B***的很多资源就白白浪费掉了。</p>
+</blockquote>
+<h4 id="TCP-快启TCP-Fast-Open"><a href="#TCP-快启TCP-Fast-Open" class="headerlink" title="TCP 快启TCP Fast Open"></a>TCP 快启TCP Fast Open</h4><p>TCP 快启策略使用存储在客户端的 TFO Cookie 与服务端快速建立连接。</p>
+<p>TCP 连接的客户端向服务端发送 SYN 消息时会携带快启选项，服务端会生成一个 Cookie 并将其发送至客户端，客户端会缓存该 Cookie，<strong>当其与服务端重新建立连接时，它会使用存储的 Cookie 直接建立 TCP 连接，服务端验证 Cookie 后会向客户端发送 SYN 和 ACK 并开始传输数据，这也就能减少通信的次数</strong>。</p>
+<ol>
+<li><p> 客户端发送SYN包，包尾加一个FOC请求，只有4个字节。</p>
+</li>
+<li><p> 服务端受到FOC请求，验证后根据来源ip地址声称cookie(8个字节)，将这个COOKIE加载SYN+ACK包的末尾发送回去。</p>
+</li>
+<li><p> 客户端缓存住获取到的Cookie 可以给下一次使用。</p>
+</li>
+<li><p> 下一次请求开始，客户端发送SYN包，这时候后面带上缓存的COOKIE，然后就是正式发送的数据。</p>
+</li>
+<li><p> 服务器端验证COOKIE正确，将数据交给上层应用处理得到相应结果，然后在发送SYN+ACK时，不再等待客户端的ACK确认，即开始发送相应数据。</p>
+</li>
+</ol>
+<p>由于TFO存在诸如TFOcookie多长时间后删除，谁来维护和删除和一些安全隐患等问题所以没有大面积推广，这个不做过多讨论。之后有机会再单独和大家聊一下这个东西。</p>
+<h3 id="关闭连接"><a href="#关闭连接" class="headerlink" title="关闭连接"></a>关闭连接</h3><h4 id="正常的关闭连接流程"><a href="#正常的关闭连接流程" class="headerlink" title="正常的关闭连接流程"></a>正常的关闭连接流程</h4><p>我们还是先来看正常的关闭连接流程，双方不管哪一方都可以主动发起关闭操作。TCP协议规定通过发送FIN段来发起关闭操作。我们先来看一下完整的流程：</p>
+<ol>
+<li><p> <em><strong>TCP A</strong></em>发送一个FIN段指明接受者希望看到的自己当前的序列号K，FIN段还包含一个ACK段用于确认对方最近一次发来的数据，并且停止发送数据，此时<em><strong>TCP A</strong></em>进入FIN-WAIT-1状态。（FIN报文不管是否携带数据，都需要消耗一个序列号）</p>
+</li>
+<li><p><em><strong>TCP B</strong></em>将序列号K的数值加1作为ACK的值，表明已经接受到FIN，进入了CLOSE-WAIT状态。这个时候上层的应用程序会被告知连接的另一端已经提出了关闭的请求，接下来就是应用程序自己的操作了。（这个时候<em><strong>TCP A</strong></em>向<em><strong>TCP B</strong></em>的方向就释放了，但是<em><strong>TCP B</strong></em>向<em><strong>TCP A</strong></em>发送数据还是可以的，这个状态会持续整个CLOSE-WAIT状态）</p>
+<ul>
+<li>  这时候<em><strong>TCP A</strong></em>接收到到来自<em><strong>TCP B</strong></em>的应答报文后，进入FIN-WAIT-2状态，等待<em><strong>TCP B</strong></em>发送连接释放报文，在这个过程中是要处理来自<em><strong>TCP B</strong></em>发过来的消息的。</li>
+</ul>
+</li>
+<li><p><em><strong>TCP B</strong></em>发送完最后的数据之后，就发送自己的FIN报文，该报文的序列号为L，然后进入进入了LAST-ACK状态。</p>
+<ul>
+<li>  这时候<em><strong>TCP A</strong></em>接收到到来自<em><strong>TCP B</strong></em>的连接释放报文后，状态进入TIME-WAIT，并不是马上释放，等待2MSL之后才会进入CLOSED状态。</li>
+</ul>
+</li>
+<li><p><em><strong>TCB A</strong></em>为了完成关闭连接，最后发送的报文段还包含一个ACK = L + 1用于确认上一个FIN。</p>
+<ul>
+<li>  <em><strong>TCP B</strong></em>只要收到了<em><strong>TCB A</strong></em>发出的确认，立即进入CLOSED状态</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>值得注意的是，如果出现FIN丢失，那么发送方将重新传输知道接收到一个ACK确认为止。</p>
+</blockquote>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">    TCP A                                                TCP B</span><br><span class="line"></span><br><span class="line">1.  ESTABLISHED                                          ESTABLISHED</span><br><span class="line"></span><br><span class="line">2.  (Close)</span><br><span class="line">    FIN-WAIT-1  --&gt; &lt;SEQ=100&gt;&lt;ACK=300&gt;&lt;CTL=FIN,ACK&gt;  --&gt; CLOSE-WAIT</span><br><span class="line"></span><br><span class="line">3.  FIN-WAIT-2  &lt;-- &lt;SEQ=300&gt;&lt;ACK=101&gt;&lt;CTL=ACK&gt;      &lt;-- CLOSE-WAIT</span><br><span class="line"></span><br><span class="line">4.                                                       (Close)</span><br><span class="line">    TIME-WAIT   &lt;-- &lt;SEQ=300&gt;&lt;ACK=101&gt;&lt;CTL=FIN,ACK&gt;  &lt;-- LAST-ACK</span><br><span class="line"></span><br><span class="line">5.  TIME-WAIT   --&gt; &lt;SEQ=101&gt;&lt;ACK=301&gt;&lt;CTL=ACK&gt;      --&gt; CLOSED</span><br><span class="line"></span><br><span class="line">6.  (2 MSL)</span><br><span class="line">    CLOSED</span><br><span class="line"></span><br><span class="line">                       Normal Close Sequence</span><br></pre></td></tr></table></figure>
+
+<p>和启动不同，关闭一个TCP连接需要4个报文段。关于TCP连接关闭，有两个问题值得拿出来讨论的。</p>
+<ol>
+<li><p>为什么客户端最后要等待一个2MSL的时间才进入CLOSED？</p>
+<ul>
+<li>  原因是保证客户端能处理“服务端没有正常接收到客户端最后一个ACK报文”这种情况，如果客户端最后发送给服务端的应答报文丢失，那么服务端就是重新发送FIN+ACK报文请求断开连接，在正常情况客户端会在2MSL内收到这条请求，如果没收到就当服务端已经正常关闭。如果在2MSL内收到了服务器的重新请求，客户端就会重新应答，然后重新启动一个2MSL的计时器。</li>
+</ul>
+</li>
+<li><p>为什么挥手要四次？</p>
+<ul>
+<li>  我们仔细观察第二三次挥手，其实就是把第二次的握手一分为二了。我们回忆下建立连接的时候，服务器是在LISTEN的状态下，收到请求连接的SYN后，将ACK和SYN放在第二次握手的报文中发送给客户端的。但是在关闭连接的时候，服务器确认的ACK和服务器要断开连接的FIN是在两个不同的报文中处理的，所以就多了一次连接。那么为什么第二三次要拆开，原因是服务端收到关闭连接请求后，是要先处理完在等待发送的数据，然后才关闭SOCKET，中间这个时间可长可短，对于客户端来说可能会误以为报文丢失，引起不必要的重传，而且这样客户端本可以切换状态告诉上层应用，也变得要一直等待服务端响应。</li>
+</ul>
+</li>
+</ol>
+<h4 id="同时关闭"><a href="#同时关闭" class="headerlink" title="同时关闭"></a>同时关闭</h4><p>和开启一样，关闭也有可能出现同时关闭的情况。下面先来看一下同时关闭的时序图。</p>
+<p>同时关闭就相对比价简单，同时关闭和正常关闭需要交换的报文段数量是相同的，两者的却别在于报文段序列是交叉还是顺序的。</p>
+<h3 id="半关闭"><a href="#半关闭" class="headerlink" title="半关闭"></a>半关闭</h3><p>TCP半关闭其实是一些应用需要此项功能，本身这个功能并不是特别常见。这个需求顾名思义就是通信双方一方完成了数据发送的工作，然后发送一个FIN给对方，但是仍然希望对方在发送FIN给我之前我能收到来自对方的数据。在伯克利套接字API里面，正常关闭的API是close()，半关闭就是shutdown()。下面这里有瓣关闭的流程图，可以看到，客户端发起关闭的流程和正常关闭是一样的，中间的数据段传输过程是可以传输任意数量的数据段，知道另一方发送完数据，发送FIN给客户端之然后收到客户端的确认之后，整个连接才完全关闭。</p>
+<h3 id="初始序列号"><a href="#初始序列号" class="headerlink" title="初始序列号"></a>初始序列号</h3><p>根据之前的内容，我们知道任何拥有合适的IP地址、端口号、符合逻辑的序列号以及正确的校验和的报文段都将被对方接收，这个时候就有一个问题，TCP报文段在金国网络略有后可能会存在<strong>延迟抵达</strong>和<strong>排序混乱</strong>的情况。为了解决这种问题，初始序列号就不能是简单的0或1，初始序列号的选择就变得非常关键了。</p>
+<p>首先如果初始序列号是1，我们来看下会发生什么情况。C端和S端建立了连接，这个时候C端给S端发送了10个包，但是由于网络问题，这10个包在网络中滞留了。这个时候C端用相同的端口号和S端发起连接，然后发了5个包。接着，之前在网络中滞留的10个包到达了S端，由于IP地址，端口号，序列号这些统统都一样，所以服务端会当作合法包接收，然后回一个回应包给C端，这个包的确认号是10，但是对于C端只发了5个包，所以一切就乱套了。、</p>
+<p>[rfc0793]给出的建议是<code> The generator is bound to a (possibly fictitious) 32 bit clock whose low order bit is incremented roughly every 4 microseconds.</code>ISN的生成器绑定到一个32位的虚拟时钟上，每4微妙递增一次。对于同一个连接的两个实例而言，新的序列号不能出现重叠的情况。其实从这里就可以看出，TCP还是挺脆弱的，只要知道IP地址，端口号，序列号就可以伪造出合法的报文段。对于这种潜在的安全问题，要么是然序列号难以猜测，要么就是加密，加密我们之后会另行讨论。</p>
+<h2 id="TCP选项"><a href="#TCP选项" class="headerlink" title="TCP选项"></a>TCP选项</h2><p>前面我们说到，TCP头部包含了多个选项，下面我们就来讨论一下几个比较重要的选项。</p>
+<h4 id="MSS-最大段大小选项"><a href="#MSS-最大段大小选项" class="headerlink" title="MSS 最大段大小选项"></a>MSS 最大段大小选项</h4><p>最大段大小指的是TCP协议锁允许从对方接收到的最大报文段。MSS指的是TCP数据报的长度儿不包括TCP头部和其他TCP选项。MSS是在SYN报文中指定的，如果没有指定，那么<strong>默认大小是536</strong>字节。这里要明确一点，MSS不是双方协商的结果，是一个单方面的限定数值。</p>
+<h4 id="SACK"><a href="#SACK" class="headerlink" title="SACK"></a>SACK</h4><p>前面在聊滑动窗口的时候，提到过累计ACK确认，由于接收到数据是无序的，所以序列号也是无序的，这就会导致数据队列中<em><strong>空洞</strong></em>的出现。按照目前TCP的确认系统不是特别的好处理这种不连续确认的状况，目前是只有低于ACK number的包都被接收才进行ACK，out-of-order的片段只能是等待，这个时间窗口是无法向右移动的。为了解决这个问题，就引入了SACK（Selective Acknowledgment 选择性确认）。说简单点就是用于描述乱序数据，一般是接收方告诉发送方<em><strong>空洞</strong></em>是哪些。SACK的标准描述文件是[rfc2018]。</p>
+<p>SACK作为一个TCP选项，想要使用必须是通信双方都同意使用，Sack-Permitted Option选项在SYN中携带。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">TCP Sack-Permitted Option:</span><br><span class="line">+---------+---------+</span><br><span class="line">| Kind=4  | Length=2|</span><br><span class="line">+---------+---------+</span><br></pre></td></tr></table></figure>
+
+<p>在两个端点都支持SACK时，检测到数据流中丢失数据包的对等方可以将此信息通知发送方。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">TCP SACK Option:</span><br><span class="line">Length: Variable</span><br><span class="line"></span><br><span class="line">                  +--------+--------+</span><br><span class="line">                  | Kind=5 | Length |</span><br><span class="line">+--------+--------+--------+--------+</span><br><span class="line">|      Left Edge of 1st Block       |</span><br><span class="line">+--------+--------+--------+--------+</span><br><span class="line">|      Right Edge of 1st Block      |</span><br><span class="line">+--------+--------+--------+--------+</span><br><span class="line">|                                   |</span><br><span class="line">/            . . .                  /</span><br><span class="line">|                                   |</span><br><span class="line">+--------+--------+--------+--------+</span><br><span class="line">|      Left Edge of nth Block       |</span><br><span class="line">+--------+--------+--------+--------+</span><br><span class="line">|      Right Edge of nth Block      |</span><br><span class="line">+--------+--------+--------+--------+</span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="时间戳-防回绕序号"><a href="#时间戳-防回绕序号" class="headerlink" title="时间戳 防回绕序号"></a>时间戳 防回绕序号</h4><p>TCP最早是在[RFC1323]中引入的timestamp选项，并在[RFC7323]中进行更新。时间戳的作用一个有两个：</p>
+<ol>
+<li>估算一条TCP连接的往返时间（round-trip-time，RTT），用于设置重传超时。</li>
+<li>防止过期报文干扰正常通信 PAWS。</li>
+</ol>
+<p>Timestamp作为一个TCP选项，在TCP首部占10个字节（8个字节用于保存两个时间戳，另外两个数值用于指明选项的数值与长度），具体如下图。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">TCP Timestamps Option (TSopt):</span><br><span class="line"></span><br><span class="line">   Kind: 8</span><br><span class="line"></span><br><span class="line">   Length: 10 bytes</span><br><span class="line"></span><br><span class="line">    +-------+-------+---------------------+---------------------+</span><br><span class="line">    |Kind=8 |  10   |   TS Value (TSval)  |TS Echo Reply (TSecr)|</span><br><span class="line">    +-------+-------+---------------------+---------------------+</span><br><span class="line">        1       1              4                     4</span><br></pre></td></tr></table></figure>
+
+<p>选项的核心数据是两个 32-bit 的时间戳字段.<strong>TSval</strong> 表示发送端发出该报文时的本地时间戳， 而 <strong>TSecr</strong> 则负责回放(Echo) 最近一次收到的对端报文中的 <strong>TSval</strong> 的值。**TSval **和 <strong>TSecr 在数值上并没有绝对的大小关系</strong>。TSval 是以本地的时钟为基准的， 而 TSecr 则是以对端的时钟为基准的。</p>
+<p>以下是一个组典型的时间戳交互过程：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">TCP  A                                     TCP B</span><br><span class="line"></span><br><span class="line">                &lt;A,TSval=1,TSecr=120&gt; -----&gt;</span><br><span class="line"></span><br><span class="line">     &lt;---- &lt;ACK(A),TSval=127,TSecr=1&gt;</span><br><span class="line"></span><br><span class="line">                &lt;B,TSval=5,TSecr=127&gt; -----&gt;</span><br><span class="line"></span><br><span class="line">     &lt;---- &lt;ACK(B),TSval=131,TSecr=5&gt;</span><br></pre></td></tr></table></figure>
+
+<p>启用 Timestamp 选项需要经过双方的协商，协商在三次握手时完成，如果协商成功,则在后续的报文中， 除了 RST 之外的所有报文均<strong>必须</strong>包含 Timestamp 选项。</p>
+<p><strong>TSval</strong>是以本地时间为基准，<strong>但是不一定要与真实时间相同</strong>，我们只需要保证<strong>TSval</strong>不要太快或者太慢就行。</p>
+<ol>
+<li>不能太慢时因为如果tick的时间过长会影响RTT的计算结果，例如10s tick一定下，对于往返时间小于10s的连接来说，算出来的RTT甚至有可能是0。</li>
+<li>不能太快是因为PAWS，因为TCP协议规定最大的MSL只有255s，那么一次时钟的循环必须大于这个值，32-bit的时钟tick必须大于59ns。否则就无法区分两个时间戳释放经历了时间戳回绕（这个下面会提到）。RFC 规定虚拟时钟的频率为每 1ms 到 1s 一个 tick。 按照 1ms 计算，32-bit 的时间戳回绕一次需要 24.8 天。</li>
+</ol>
+<p><strong>TSecr</strong>一般来说填入对端上一个报文的 TSval 就行，但是下面三种特殊情景需要注意一下：</p>
+<ol>
+<li><p><strong>Delay ACK</strong>，这个选项的本质是为了减少网络中的pure ACK，其实就是前面说道的延时应答机制，等报文积累到一定程度再进行应答（上一章提到过这个设计）。开启了Delay ACK后，当启用了Delay ACK后接收端收到多个报文的时候，就会出现多个时间，这个时候我们用最早的报文的 TSval，只有这样算出来的RTT才准确。</p>
+</li>
+<li><p><strong>空洞</strong> 发送端发送了多个报文，但是由于网络原因出现了<strong>空洞</strong>，意味着可能发生了网络阻塞，这个时候我们最好是可以让接收方echo早一点的TSval，而不是序号最大的报文的TSval，这样的发送方计算出的RTT会偏大，发送报文就更保守，有利于减小阻塞。</p>
+</li>
+<li><p><strong>空洞补上</strong> 这里有两种可能：</p>
+<ol>
+<li>乱序的报文来迟了</li>
+<li>收到的是重传的报文</li>
+</ol>
+<p>不管是哪种，都要Echo当前报文的TSval，这样才能反映真实的网络情况。</p>
+</li>
+</ol>
+<p><strong>算法</strong> </p>
+<p>针对上面说的情景，在RFC[1323]中有设计出一套解决的算法可以处理上面问题的同时也能兼容正常场景。</p>
+<ol>
+<li>连接状态增加两个32位的变量 TS.Recent 和 Last.ACK.sent。TS.Recnet保存下一个填入TSecr的时间戳。Last.ACK.sent保存上一个有序报文的ACK。在不启用delay ACK的时候，Last.ACK.sent 和 RCV.NXT是保持一致的。当启用delay ACK的时候，每收到一个有序报文，RCV.NXT就会向后推进，Last.ACK.sent 只会在真正 ACK 报文发送过后才更新。</li>
+<li>如果收到的报文时间戳大于TS.Recent并且报文没有造成空洞，则立刻更新TS.Recent的值</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">if SEG.TSval &gt;= TS.Recent and SEG.SEQ &lt;= Last.ACK.sent</span><br><span class="line">then </span><br><span class="line">	TS.Recnet = SEG.TSval</span><br></pre></td></tr></table></figure>
+
+<p>来看一下RFC[1323]中，针对不同情况给出的官方例子。</p>
+<ul>
+<li>接收端启用了delay-ACK， 报文顺序按照A -&gt; B -&gt; C 到</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">                                  TS.Recent   Last.ACK.sent  RCV.NXT</span><br><span class="line">&lt;A, TSval=1&gt; -------------------&gt;                             </span><br><span class="line">                                      1            A          A-&gt;B</span><br><span class="line">&lt;B, TSval=2&gt; -------------------&gt;</span><br><span class="line">                                      1            A          B-&gt;C</span><br><span class="line">&lt;C, TSval=3&gt; -------------------&gt; </span><br><span class="line">                                      1            A          C-&gt;D</span><br><span class="line">         &lt;---- &lt;ACK(C), TSecr=1&gt;                   </span><br><span class="line">(etc.)                                1           A-&gt;D         D</span><br></pre></td></tr></table></figure>
+
+<p>这个例子可以看到启用了delay-ACK之后，TS.Recent的值一直是收到的一个包的TSval = 1，Last.ACK.sent真正 ACK 报文发送过后才更新，RCV.NXT却是马上更新的。</p>
+<ul>
+<li>未启用delay-ACK，报文乱序</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">                                  TS.Recent   Last.ACK.sent  RCV.NXT</span><br><span class="line">&lt;A, TSval=1&gt; -------------------&gt;</span><br><span class="line">                                      1           A           A-&gt;B </span><br><span class="line">         &lt;---- &lt;ACK(A), TSecr=1&gt;</span><br><span class="line">                                      1          A-&gt;B          B</span><br><span class="line">&lt;C, TSval=3&gt; -------------------&gt;</span><br><span class="line">                                      1           B            B                         </span><br><span class="line">         &lt;---- &lt;ACK(A), TSecr=1&gt;</span><br><span class="line">                                      1           B            B</span><br><span class="line">&lt;B, TSval=2&gt; -------------------&gt;</span><br><span class="line">                                     1-&gt;2         B           B-&gt;D           </span><br><span class="line">         &lt;---- &lt;ACK(C), TSecr=2&gt;</span><br><span class="line">                                      2          B-&gt;D          D</span><br><span class="line">&lt;E, TSval=5&gt; -------------------&gt;</span><br><span class="line">                                      2            D           D</span><br><span class="line">         &lt;---- &lt;ACK(C), TSecr=2&gt;</span><br><span class="line">                                      2            D           D</span><br><span class="line">&lt;D, TSval=4&gt; -------------------&gt;</span><br><span class="line">                                     2-&gt;4          D          D-&gt;F       </span><br><span class="line">         &lt;---- &lt;ACK(E), TSecr=4&gt;</span><br><span class="line">                                      4           D-&gt;F         F</span><br><span class="line">(etc.)</span><br></pre></td></tr></table></figure>
+
+<p>这个例子看C, D就行了，报文 C 到达后, 由于造成了接收端序号空洞，因此不会更新 TS.Recent, 报文 B 到达, 填上了空洞，因此 TS.Recent 更新，根据TS.Recent更新原则，这个时候需要用B的TSval更新到TS.Resent，后面D包到的时候也是同理。Last.ACK.sent 和 RCV.NXT都是在没有空洞之后才更新。</p>
+<p><strong>PAWS Protection Against Wrapped Sequences 防止序号回绕</strong></p>
+<p>先把PAWS的原理说给大家，PAWS本质就是利用<em><strong>时间戳是单调递增</strong></em>的这一数学特性来判断报文是否过期。</p>
+<p>TSval是发送端发送报文的时间戳，因此如果SEG.TSval &lt; TS.Recent,则说明这个报文时老旧的过期报文，可以丢弃。因为前面说过，TS.Recent必须是没有空洞的时候才会更新。假设报文SEG1在网络中滞留，然后发送端重传了SEG2。这个时候接收端先收到了SEG2，更新TS.Recent = SEG2.TSval,这个时候SEG1到了，因为SEG1.TSval &lt; SEG2.TSval,所以SEG1.TSval &lt; TS.Resent,因此根据规则SEG1被丢弃。</p>
+<h4 id="用户超时选项"><a href="#用户超时选项" class="headerlink" title="用户超时选项"></a>用户超时选项</h4><h2 id="TCP状态转换"><a href="#TCP状态转换" class="headerlink" title="TCP状态转换"></a>TCP状态转换</h2><h2 id="重置报文段"><a href="#重置报文段" class="headerlink" title="重置报文段"></a>重置报文段</h2><h2 id="TCP服务器选项"><a href="#TCP服务器选项" class="headerlink" title="TCP服务器选项"></a>TCP服务器选项</h2><h2 id="与TCP连接相关的攻击"><a href="#与TCP连接相关的攻击" class="headerlink" title="与TCP连接相关的攻击"></a>与TCP连接相关的攻击</h2><h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2>
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/TCP/" rel="tag"># TCP</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/09/04/network-1/" rel="next" title="TCP 传输控制协议(一、初步了解)">
+                <i class="fa fa-chevron-left"></i> TCP 传输控制协议(一、初步了解)
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7Carchive">
+              
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#TCP-%E4%BC%A0%E8%BE%93%E6%8E%A7%E5%88%B6%E5%8D%8F%E8%AE%AE-%E4%BA%8C%E3%80%81%E8%BF%9E%E6%8E%A5%E7%AE%A1%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">TCP 传输控制协议(二、连接管理)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP%E8%BF%9E%E6%8E%A5%E7%9A%84%E5%BB%BA%E7%AB%8B%E4%B8%8E%E7%BB%88%E6%AD%A2"><span class="nav-number">1.2.</span> <span class="nav-text">TCP连接的建立与终止</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">连接建立</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%AD%A3%E5%B8%B8%E7%9A%84%E8%BF%9E%E6%8E%A5%E5%BB%BA%E7%AB%8B%E6%B5%81%E7%A8%8B%EF%BC%88%E4%B8%89%E6%AC%A1%E6%8F%A1%E6%89%8B%EF%BC%89"><span class="nav-number">1.2.1.1.</span> <span class="nav-text">正常的连接建立流程（三次握手）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8C%E6%97%B6%E6%89%93%E5%BC%80-Simultaneous-initiation"><span class="nav-number">1.2.1.2.</span> <span class="nav-text">同时打开 Simultaneous initiation</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TCP-%E5%BF%AB%E5%90%AFTCP-Fast-Open"><span class="nav-number">1.2.1.3.</span> <span class="nav-text">TCP 快启TCP Fast Open</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%97%AD%E8%BF%9E%E6%8E%A5"><span class="nav-number">1.2.2.</span> <span class="nav-text">关闭连接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%AD%A3%E5%B8%B8%E7%9A%84%E5%85%B3%E9%97%AD%E8%BF%9E%E6%8E%A5%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.2.1.</span> <span class="nav-text">正常的关闭连接流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%90%8C%E6%97%B6%E5%85%B3%E9%97%AD"><span class="nav-number">1.2.2.2.</span> <span class="nav-text">同时关闭</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8A%E5%85%B3%E9%97%AD"><span class="nav-number">1.2.3.</span> <span class="nav-text">半关闭</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%BA%8F%E5%88%97%E5%8F%B7"><span class="nav-number">1.2.4.</span> <span class="nav-text">初始序列号</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP%E9%80%89%E9%A1%B9"><span class="nav-number">1.3.</span> <span class="nav-text">TCP选项</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#MSS-%E6%9C%80%E5%A4%A7%E6%AE%B5%E5%A4%A7%E5%B0%8F%E9%80%89%E9%A1%B9"><span class="nav-number">1.3.0.1.</span> <span class="nav-text">MSS 最大段大小选项</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#SACK"><span class="nav-number">1.3.0.2.</span> <span class="nav-text">SACK</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E6%88%B3-%E9%98%B2%E5%9B%9E%E7%BB%95%E5%BA%8F%E5%8F%B7"><span class="nav-number">1.3.0.3.</span> <span class="nav-text">时间戳 防回绕序号</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%A8%E6%88%B7%E8%B6%85%E6%97%B6%E9%80%89%E9%A1%B9"><span class="nav-number">1.3.0.4.</span> <span class="nav-text">用户超时选项</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2"><span class="nav-number">1.4.</span> <span class="nav-text">TCP状态转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E7%BD%AE%E6%8A%A5%E6%96%87%E6%AE%B5"><span class="nav-number">1.5.</span> <span class="nav-text">重置报文段</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%80%89%E9%A1%B9"><span class="nav-number">1.6.</span> <span class="nav-text">TCP服务器选项</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8ETCP%E8%BF%9E%E6%8E%A5%E7%9B%B8%E5%85%B3%E7%9A%84%E6%94%BB%E5%87%BB"><span class="nav-number">1.7.</span> <span class="nav-text">与TCP连接相关的攻击</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">1.8.</span> <span class="nav-text">小结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">姬凌伟</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

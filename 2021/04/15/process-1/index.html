@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="python 多进程," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="进程是指计算机中已运行的程序。进程是资源分配的最小单位 多进程的好处python中的多进程和多线程相比，由于GIL锁的存在，所以多线程只能做到并发，多进程可以做到并行，能更好利用多CPU的优势。进程间数据不会互相影响，而且调试起来比线程简单。 如何使用多进程1.直接使用multiprocessing .Process 1234567891011121314151617import multipro">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Python 进程 (一)">
+<meta property="og:url" content="http://example.com/2021/04/15/process-1/index.html">
+<meta property="og:site_name" content="枫叶苑">
+<meta property="og:description" content="进程是指计算机中已运行的程序。进程是资源分配的最小单位 多进程的好处python中的多进程和多线程相比，由于GIL锁的存在，所以多线程只能做到并发，多进程可以做到并行，能更好利用多CPU的优势。进程间数据不会互相影响，而且调试起来比线程简单。 如何使用多进程1.直接使用multiprocessing .Process 1234567891011121314151617import multipro">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-04-15T06:35:46.000Z">
+<meta property="article:modified_time" content="2021-09-16T02:31:29.715Z">
+<meta property="article:author" content="姬凌伟">
+<meta property="article:tag" content="python 多进程">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://example.com/2021/04/15/process-1/"/>
+
+
+
+
+
+  <title>Python 进程 (一) | 枫叶苑</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">枫叶苑</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/04/15/process-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="枫叶苑">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Python 进程 (一)</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-04-15T14:35:46+08:00">
+                2021-04-15
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h1><p>是指计算机中已运行的程序。<strong>进程是资源分配的最小单位</strong></p>
+<h2 id="多进程的好处"><a href="#多进程的好处" class="headerlink" title="多进程的好处"></a>多进程的好处</h2><p>python中的多进程和多线程相比，由于GIL锁的存在，所以多线程只能做到并发，多进程可以做到并行，能更好利用多CPU的优势。进程间数据不会互相影响，而且调试起来比线程简单。</p>
+<h2 id="如何使用多进程"><a href="#如何使用多进程" class="headerlink" title="如何使用多进程"></a>如何使用多进程</h2><p>1.直接使用multiprocessing .Process</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">fun</span>():</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;multiprocessing testing...&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    pList = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">        p = multiprocessing.Process(target=fun, ) <span class="comment"># 在主程序中创建进程对象</span></span><br><span class="line">        p.start() <span class="comment"># 调用start()方法</span></span><br><span class="line">        pList.append(p)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> p <span class="keyword">in</span> pList:</span><br><span class="line">        p.join()	<span class="comment"># 如果没有join() ，主进程退出之后子进程会留在idle中，你必须手动杀死它们。</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;测试结束&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>multiprocessing testing…<br>multiprocessing testing…<br>multiprocessing testing…<br>multiprocessing testing…<br>multiprocessing testing…<br>测试结束</p>
+</blockquote>
+<p>2.第二种方法是通过继承Process类实现的。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyProcess</span>(<span class="params">multiprocessing.Process</span>):</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span>(<span class="params">self, name</span>):</span></span><br><span class="line">        <span class="built_in">super</span>(MyProcess, self).__init__()</span><br><span class="line">        self.name = name</span><br><span class="line">        </span><br><span class="line">	<span class="comment"># 每一个继承了 Process 并重写了 run() 方法的子类都代表一个进程。此方法是进程的入口</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">run</span>(<span class="params">self</span>):</span></span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;multiprocessing testing...&quot;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&quot;__main__&quot;</span>:</span><br><span class="line">    pList = []</span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">5</span>):</span><br><span class="line">        p = MyProcess(<span class="string">&quot;process&quot;</span>)</span><br><span class="line"></span><br><span class="line">        p.start()</span><br><span class="line">        pList.append(p)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> p <span class="keyword">in</span> pList:</span><br><span class="line">        p.join()  <span class="comment"># join() 命令可以让主进程等待其他进程结束最后退出。</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;测试结束&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>multiprocessing testing…<br>multiprocessing testing…<br>multiprocessing testing…<br>multiprocessing testing…<br>multiprocessing testing…<br>测试结束</p>
+</blockquote>
+<h2 id="如何为一个进程命名"><a href="#如何为一个进程命名" class="headerlink" title="如何为一个进程命名"></a>如何为一个进程命名</h2><p>除了创建进程，分配目标函数和函数参数以外，给函数命名也很关键，这样我们debug会更方便。</p>
+<p>在进程函数中调用<code>multiprocessing.current_process().name</code>可以获取进程名。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 命名一个进程</span></span><br><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">foo</span>():</span></span><br><span class="line">    name = multiprocessing.current_process().name</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Starting %s&quot;</span> % name)</span><br><span class="line">    time.sleep(<span class="number">3</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Exiting %s&quot;</span> % name)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    process_with_name = multiprocessing.Process(name=<span class="string">&#x27;foo_process&#x27;</span>, target=foo)</span><br><span class="line">    process_with_default_name = multiprocessing.Process(target=foo)</span><br><span class="line">    process_with_name.start()</span><br><span class="line">    process_with_default_name.start()</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Starting foo_process</span><br><span class="line">Starting Process-2</span><br><span class="line">Exiting foo_process</span><br><span class="line">Exiting Process-2</span><br></pre></td></tr></table></figure>
+</blockquote>
+<h2 id="后台进程"><a href="#后台进程" class="headerlink" title="后台进程"></a>后台进程</h2><p>如果需要处理比较巨大的任务，又不需要人为干预，将其作为后台进程执行是个非常常用的编程模型。此进程又可以和其他进程并发执行。通过Python的multiprocessing模块的后台进程选项，我们可以让进程在后台运行。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">foo</span>():</span></span><br><span class="line">    name = multiprocessing.current_process().name</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Starting %s &quot;</span> % name)</span><br><span class="line">    time.sleep(<span class="number">3</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;Exiting %s &quot;</span> % name)</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    background_process = multiprocessing.Process(name=<span class="string">&#x27;background_process&#x27;</span>, target=foo)</span><br><span class="line">    background_process.daemon = <span class="literal">True</span> <span class="comment"># 设置 daemon 参数为 True</span></span><br><span class="line">    NO_background_process = multiprocessing.Process(name=<span class="string">&#x27;NO_background_process&#x27;</span>, target=foo)</span><br><span class="line">    NO_background_process.daemon = <span class="literal">False</span></span><br><span class="line">    background_process.start()</span><br><span class="line">    NO_background_process.start()</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Starting NO_background_process<br>Exiting NO_background_process </p>
+</blockquote>
+<p>在非后台运行的进程会看到一个输出，后台运行的没有输出，后台运行进程在主进程结束之后会自动结束。</p>
+<p><strong>注意</strong>：后台进程不允许创建子进程。否则，当后台进程跟随父进程退出的时候，子进程会变成孤儿进程。另外，它们并不是Unix的守护进程或服务（daemons or services），所以当非后台进程退出，它们会被终结。</p>
+<h2 id="进程存活状态"><a href="#进程存活状态" class="headerlink" title="进程存活状态"></a>进程存活状态</h2><p>如果想马上杀死一个进程，可以用<code>terminate()</code> 方法，另外我们可以用<code>is_alive()</code>来判断一个进程是否存活。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> multiprocessing</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">foo</span>():</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Starting function&#x27;</span>)</span><br><span class="line">    time.sleep(<span class="number">0.1</span>)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Finished function&#x27;</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    p = multiprocessing.Process(target=foo)</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Process before execution:&#x27;</span>, p, p.is_alive())</span><br><span class="line">    p.start()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Process running:&#x27;</span>, p, p.is_alive())</span><br><span class="line">    p.terminate()</span><br><span class="line">    time.sleep(<span class="number">1</span>)  <span class="comment"># 这里停一秒的原因是，关闭进程,不会立即关闭,所以is_alive立刻查看的结果还是会显示True</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Process terminated:&#x27;</span>, p, p.is_alive())</span><br><span class="line">    p.join()</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Process joined:&#x27;</span>, p, p.is_alive())</span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&#x27;Process exit code:&#x27;</span>, p.exitcode)</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>Process before execution: <Process name='Process-1' parent=3048 initial> False<br>Process running: <Process name='Process-1' pid=3260 parent=3048 started> True<br>Process terminated: <Process name='Process-1' pid=3260 parent=3048 stopped exitcode=-SIGTERM> False<br>Process joined: <Process name='Process-1' pid=3260 parent=3048 stopped exitcode=-SIGTERM> False<br>Process exit code: -15</p>
+</blockquote>
+<p>我们创建了一个进程，然后用 <code>is_alive()</code> 方法监控它的声明周期。然后通过调用 <code>terminate()</code> 方法结束进程。</p>
+<p>最后，我们通过读进程的 <code>ExitCode</code> 状态码（status code）验证进程已经结束， <code>ExitCode</code> 可能的值如下：</p>
+<ul>
+<li>== 0: 没有错误正常退出</li>
+<li>&gt; 0: 进程有错误，并以此状态码退出</li>
+<li>&lt; 0: 进程被 <code>-1 *</code> 的信号杀死并以此作为 ExitCode 退出</li>
+</ul>
+<p>在我们的例子中，输出的 <code>ExitCode</code> 是 <code>-15</code> 。负数表示子进程被数字为15的信号杀死。</p>
+<h2 id="Process类其他方法"><a href="#Process类其他方法" class="headerlink" title="Process类其他方法"></a>Process类其他方法</h2><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">构造方法：</span><br><span class="line"></span><br><span class="line">Process([group [, target [, name [, args [, kwargs]]]]])</span><br><span class="line">　　group: 线程组 </span><br><span class="line">　　target: 要执行的方法</span><br><span class="line">　　name: 进程名</span><br><span class="line">　　args/kwargs: 要传入方法的参数</span><br><span class="line"></span><br><span class="line">实例方法：</span><br><span class="line">　　is_alive()：返回进程是否在运行,bool类型。</span><br><span class="line">　　join([timeout])：阻塞当前上下文环境的进程程，直到调用此方法的进程终止或到达指定的timeout（可选参数）。</span><br><span class="line">　　start()：进程准备就绪，等待CPU调度</span><br><span class="line">　　run()：strat()调用run方法，如果实例进程时未制定传入target，这star执行t默认run()方法。</span><br><span class="line">　　terminate()：不管任务是否完成，立即停止工作进程</span><br><span class="line"></span><br><span class="line">属性：</span><br><span class="line">　　daemon：和线程的setDeamon功能一样</span><br><span class="line">　　name：进程名字</span><br><span class="line">　　pid：进程号</span><br></pre></td></tr></table></figure>
+
+<p>关于join，daemon的使用和python多线程一样，就不赘述了。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/python-%E5%A4%9A%E8%BF%9B%E7%A8%8B/" rel="tag"># python 多进程</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/04/15/algorithm-1/" rel="next" title="algorithm_1">
+                <i class="fa fa-chevron-left"></i> algorithm_1
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/04/15/thread-2/" rel="prev" title="Python 线程 (二)">
+                Python 线程 (二) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7Carchive">
+              
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B"><span class="nav-number">1.</span> <span class="nav-text">进程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%9A%84%E5%A5%BD%E5%A4%84"><span class="nav-number">1.1.</span> <span class="nav-text">多进程的好处</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8%E5%A4%9A%E8%BF%9B%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">如何使用多进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%B8%BA%E4%B8%80%E4%B8%AA%E8%BF%9B%E7%A8%8B%E5%91%BD%E5%90%8D"><span class="nav-number">1.3.</span> <span class="nav-text">如何为一个进程命名</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%8E%E5%8F%B0%E8%BF%9B%E7%A8%8B"><span class="nav-number">1.4.</span> <span class="nav-text">后台进程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E7%A8%8B%E5%AD%98%E6%B4%BB%E7%8A%B6%E6%80%81"><span class="nav-number">1.5.</span> <span class="nav-text">进程存活状态</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Process%E7%B1%BB%E5%85%B6%E4%BB%96%E6%96%B9%E6%B3%95"><span class="nav-number">1.6.</span> <span class="nav-text">Process类其他方法</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">姬凌伟</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

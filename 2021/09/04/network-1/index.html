@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="TCP rfc793," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="TCP 传输控制协议(一、初步了解)引言上一章我们讨论的是自身不包含可靠传递数据机制的协议。一般这种协议会使用一种像校验和或CRC这样的数学函数来检测接收到的数据是否有差错，但是他们不会尝试去纠正差错。不管是IP还是UDP都没有实现差错纠正。差错纠正一般有两种大的思路：校正和重传  校正：通信媒介可能会丢失或改变被传递的消息，使用差错校正码来纠正通信问题是处理差错的一种非常重要的方法，本质上就是添">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP 传输控制协议(一、初步了解)">
+<meta property="og:url" content="http://example.com/2021/09/04/network-1/index.html">
+<meta property="og:site_name" content="枫叶苑">
+<meta property="og:description" content="TCP 传输控制协议(一、初步了解)引言上一章我们讨论的是自身不包含可靠传递数据机制的协议。一般这种协议会使用一种像校验和或CRC这样的数学函数来检测接收到的数据是否有差错，但是他们不会尝试去纠正差错。不管是IP还是UDP都没有实现差错纠正。差错纠正一般有两种大的思路：校正和重传  校正：通信媒介可能会丢失或改变被传递的消息，使用差错校正码来纠正通信问题是处理差错的一种非常重要的方法，本质上就是添">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-09-04T06:31:15.000Z">
+<meta property="article:modified_time" content="2021-09-16T02:31:20.624Z">
+<meta property="article:author" content="姬凌伟">
+<meta property="article:tag" content="TCP rfc793">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://example.com/2021/09/04/network-1/"/>
+
+
+
+
+
+  <title>TCP 传输控制协议(一、初步了解) | 枫叶苑</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.4.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">枫叶苑</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2021/09/04/network-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="枫叶苑">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">TCP 传输控制协议(一、初步了解)</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2021-09-04T14:31:15+08:00">
+                2021-09-04
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h1 id="TCP-传输控制协议-一、初步了解"><a href="#TCP-传输控制协议-一、初步了解" class="headerlink" title="TCP 传输控制协议(一、初步了解)"></a>TCP 传输控制协议(一、初步了解)</h1><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>上一章我们讨论的是自身不包含可靠传递数据机制的协议。一般这种协议会使用一种像校验和或CRC这样的数学函数来<em><strong>检测</strong></em>接收到的数据是否有差错，但是他们不会尝试去纠正差错。不管是IP还是UDP都没有实现差错纠正。差错纠正一般有两种大的思路：<strong>校正</strong>和<strong>重传</strong></p>
+<ul>
+<li><strong>校正</strong>：通信媒介可能会丢失或改变被传递的消息，使用<strong>差错校正码</strong>来纠正通信问题是处理差错的一种非常重要的方法，本质上就是添加一些冗余的比特，是的即使某些比特被毁，真实的信息也可以被恢复。</li>
+<li><strong>重传</strong>：通过<code>尝试重新发送</code>，知道信息最终被接收，这种方式称为<strong>重复请求</strong>(Automatic Repeat-reQuest，ARQ)，ARQ是许多通信协议的基础。ARQ是OSI模型中数据链路层和传输层的错误纠正协议之一。通过使用确认和超时这两个机制，在不可靠服务的基础上实现可靠的信息传输。</li>
+</ul>
+<p>这一章我们就会初步了解运输层可靠数据传输协议TCP（由于TCP的内容实在是太多，所以将会分几章介绍）</p>
+<p>对于一个协议，核心要实现的特性其实只有两点：<strong>可靠</strong>和<strong>高效</strong>。下面先介绍下TCP协议的一些前置知识。</p>
+<h2 id="ARQ和重传"><a href="#ARQ和重传" class="headerlink" title="ARQ和重传"></a>ARQ和重传</h2><p>由于大部分情况不仅仅是单个信道通信，而是几个的多跳级联，除了遇到分组比特差错之外，还会遇到例如：分组重新排序、分组复制、分组泯灭等在中间路由器上发生的问题。为了在多跳通信信道上使用而设计的带纠错的协议必须要处理这些问题。</p>
+<p>一个最简单处理分组丢失和比特差错的方法就是重发分组知道它被正确接收。这时候需要判断的问题有两个：</p>
+<ol>
+<li>接收方是否已收到分组。</li>
+<li>接收方接收到的分组是否与之前发送方发送的一样。</li>
+</ol>
+<p>要处理这两个问题也很简单，无非就是接收方告诉发送方自己已经正确接收到一个分组，这个方法称作确认（acknowledgment）或 ACK。基本流程就是，发送方发送一个分组然后等待ACK。接收方接收到分组后发送对应的ACK，发送方接收到ACK之后发送下一个分组。流程本身没有什么复杂的地方，但是这个时候有三个新的问题值得被注意：</p>
+<ol>
+<li>发送方对一个ACK的等待时长应该是多久。</li>
+<li>如果ACK本身丢失怎么处理。</li>
+<li>如果分组被接收到，但是里面有差错的话要怎么办。</li>
+</ol>
+<p>对于这三个问题我们一个个来看，首先第一个问题确定等待时长其实是三个问题中实现起来最麻烦的，因为这个其实是没有一个标准的时间，这个问题放在后面讨论TCP超时重传的问题里面套路。</p>
+<p>第二个问题处理方式就比较粗暴了，因为发送其实很难区分<em>ACK丢失</em>和<em>原分组丢失</em>这两种情况，所以解决方案就是<strong>直接不区分</strong>，统一按照原分组丢失来处理，直接重传（最近的学习过程中发现，越是这种偏底层的技术面对问题处理的方式越粗暴）。选择直接重传的方式固然快捷，但是会引入一个新的问题，接收方可能会接收到两个或多个同一分组的拷贝，那么解决这个问题的方法就是<strong>序列号</strong> （sequence number）。在发送方发送的时候，每个唯一的分组都会分配一个新的序列号，这个序列号由分组自身携带，接收方就是通过序列号来区分该分组是否是重复是否需要丢弃（这个时候如果你足够聪明，就是想到一个新的问题<code>序列号不可能是无限大的，那么序列号的使用肯定是重复使用某个区间的数值，那就意味着如果使用速度足够快，网络中是完全有可能出现两个不同的分组但是序列号相同</code>，那么接收方要怎么区分呢？在后面讲到防回绕的时候回提到，现在先略过）</p>
+<p>第三个问题一般是使用编码技术来解决，校验和或者CRC都是比较受欢迎的解决方式，检查差错一般只需要使用比自身小很多的比特就可以纠正，所以简单的编码一般是不能纠正差错，只能检测。当接收方接收到一个有差错的分组时，就不发送ACK，直到发送方重新发送完整到达的无差错分组。</p>
+<blockquote>
+<p>这里发现了一个很有意思的事情，就是上面这三个问题处理方式的最终表现，对于发送方来说都是一样的，就是在规定的时间内收不到ACK，然后重传。我觉得这里的设计真的挺厉害的，这个设计不但是解决了上面说到的问题，而且大大简化了发送方需要处理的情况，几乎没有额外引入新的问题。</p>
+</blockquote>
+<p>讨论到这里，协议的可靠性得到了基本的解决，分组的丢失是错误基本都得到了保障，但是效率并不高。如果发送方发送一个哪怕很小的分组都要用很长时间的话（这个是完全有可能的，如果链路层是走卫星链路，一到两秒是正常时间。我们知道人类目前所能认知的<em>信息传播</em>的最大<em>速度</em>是光速，我们暂时是没有办法突破这个物理极限）。发送方发送一个分组后，就停下来等待ACK，此时协议被称为“停止和等待”。假设最理想的情况，整个传输过程中没有出现丢失和损坏，我们把M设为分组大小，R是往返时间（RTT），那么该协议的吞吐量性能与M/R成正比。但是如果有分组丢失和信息损坏的情况下，“吞吐质”（单位时间传输的有效数据量）则要低于吞吐量。</p>
+<p>对于不会损害和丢失太多分组的网络来说，造成上面低吞吐量的的原因其实就是网络没有时刻处于繁忙状态。因为对于一条连接来说，同一时间只有一个分组存在网络中，如果想提高效率，最直接有效的方法无疑是同一时间允许多个分组存在网络中，从而提高吞吐量（是不是闻到了多线程那个熟悉的味道）</p>
+<p>允许多个分组同时进入网络，我们就要解决新的问题：</p>
+<ol>
+<li>发送方什么时候注入一个分组到网络中，注入多少个。</li>
+<li>在等待ACK的时候，如何维护计数器。</li>
+<li>需要保存每个还没确认的分组的一个副本以防需要重传。</li>
+</ol>
+<p>除了上面这三个比较明显的问题，ACK的机制要比前面的更加复杂，接收方必须要可以区分哪些分组已经收到，哪些还没有。由于多个分组在传输过程中不可能是必定有序的，所以接收方也必须有更复杂的分组保存机制以维护乱序到达的分组（丢包或者次序重排）。还有一些隐性问题，例如接收方的接收速率比发送方的发送速率慢，这个时候如果发送方还是和UDP那样一直以很高的速率发送分组，就有可能出现大量丢包，不仅传输层会有这个问题，路由器也可能有这个问题，路由器有可能处理不了发送方和接收方想要使用的数据发送率。</p>
+<h2 id="窗口"><a href="#窗口" class="headerlink" title="窗口"></a>窗口</h2><h3 id="分组窗口和窗口滑动"><a href="#分组窗口和窗口滑动" class="headerlink" title="分组窗口和窗口滑动"></a>分组窗口和窗口滑动</h3><p>为了解决上面提到的问题，我们采用一个叫窗口（window）的方式。我们给每个分组一个序列号，定义一个分组窗口作为<strong>已被发送方注入</strong>但<strong>还没完成确认</strong>的分组的集合。这个窗口中的分组数量称为窗口大小（window size）。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">				左边界窗口              右边界窗口</span><br><span class="line">                 ↓                    ↓</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|  ...    |  3   |  4   |  5   |  6   |  7  |  ...    |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">				↑   |←   当前窗口，大小为3 →|  ↑</span><br><span class="line">		 已发送并确认                        仍未被发送   </span><br></pre></td></tr></table></figure>
+
+<p>上面这个图，窗口大小就是3。3号分组已经被发送并确认，发送方就可以释放保存它的副本，分组7在发送方已经准备好，但是还没进入“窗口”，所以未被发送。这个时候发送方如果收到分组4的ACK，那么窗口就向右“滑动”，就可以释放分组4的副本，然后发送分组7。这个就是滑动窗口（silding window）协议。窗口的结构在发送方和接收方都有，发送方一般会记录哪些分组可以被释放，哪些分组在等待ACK，哪些分组还不能发送。接收方记录着哪些分组已经被接收和确认，哪些分组时下一步期望的，已经分配了多少内存保存，哪些分组即使被接收也会因内存限制而被丢弃。</p>
+<p>那么窗口应该多大，如果处理方或者网络处理不古来发送方的数据时怎么办呢？</p>
+<h3 id="变量窗口-流量控制和拥塞控制"><a href="#变量窗口-流量控制和拥塞控制" class="headerlink" title="变量窗口:流量控制和拥塞控制"></a>变量窗口:流量控制和拥塞控制</h3><p>为了处理当接收方相对发送方太慢时产生的问题，有一种比较常见的方法，在接收方跟不上的时候就强迫发送方慢下来，称为<strong>流量控制</strong>（flow control）。一般实现流量控制有两种方式。第一种是<strong>基于速率</strong>（rate-based）的流量控制，做法是直接给发送方限制速率，确保数据永远不能超过这个速率发送。这种类型的流量控制适合流应用程序，用于广播和组播发现。</p>
+<p>另一种流量控制是<strong>基于窗口</strong>（window-based），是比较流行的方式。在这种方式里，窗口大小不是固定的，而是随时间而变动的。要使用这种方式必须有一种方法让接收方通知发送方使用多大的窗口。这一般称为<strong>窗口通告</strong>（window advertisement）或者<strong>窗口更新</strong>（window update）。从逻辑上说，窗口更新和ACK应该是分离的，但是实际上窗口更新和ACK一般是同一个分组携带的，意味着发送方往往会在它的窗口滑动的时候调整窗口大小。</p>
+<p>这种方式很有效地达到了流量控制，如果网络中没有丢包，假设发送方允许注入W个分组，S是分组大小，R是往返时间（RTT），那么通信速率正比于 SW/R。但是这种方式只能有效保护接收方，如果发送方的速率超过某个路由器的能力，还是会导致丢包。这由一种称为<strong>拥塞控制</strong>（congestion control）的流量控制形式来处理。</p>
+<blockquote>
+<p>拥塞控制本质就是减低发送方的速度，之前流量控制中是通过一个窗口通告来告之发送方调整速度。A节点通知B节点对某个数据做出调整一般是两种场景：明确发信和猜测发信。例如像窗口通告，A节点能确切通知B节点现在要做出什么改变，我们称之为<em><strong>明确</strong></em>（explicit）发信，有一个协议段专用于通知B节点发生了什么。另一种则是A节点只能通知B节点发生了什么，B节点需要通过猜测的方式作出调整，这种称为<em><strong>隐性</strong></em>通知。关于TCP拥塞控制会在后面专门讨论。</p>
+</blockquote>
+<h3 id="设置重传超时"><a href="#设置重传超时" class="headerlink" title="设置重传超时"></a>设置重传超时</h3><p>前面提到过，基于重传实现可靠性的协议有一个很重要的问题就是，等待多久才算是超时。首先我们来看一下“准时”的定义，正常收到接收方发送过来的ACK时间长度应该等于：发送分组所有的时间 + 接收方处理分组和发送ACK的时间 + ACK返回到发送方所用的时间 + 发送方处理ACK的时间。总结起来简单，但是骚的是这四个量<em>没有一个是可以提前确切知道的</em>。这些值还有可能根据路由器或者终端主机的额外负载变化而变化。</p>
+<p>既然不同通过提前计算得出结果，那么重传超时要么用户设定，要么机器自己估算。用户设定肯定是不行的，所以只能是机器自己估算。这个过程称为<em><strong>往返时间估计</strong></em>（round-trip–time estimation），这是一个<strong>统计</strong>过程。选择一组<strong>RTT</strong>样本来估值就是目前看起来最合理的。接下来就要讨论估值需要取哪个值，第一反应肯定是平均值，但是平均值明显是不合理的，原因是一组样本的时间分布很难确认，如果贸然用均值或者中位数来当做估值结果是很有可能导致大量分组被丢弃，导致不必要的重传。用太大的值也不行，因为会导致网络变得空闲。那这个值具体要怎么设定也会在后面的章节专门讨论。</p>
+<h2 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h2><h3 id="TCP引入"><a href="#TCP引入" class="headerlink" title="TCP引入"></a>TCP引入</h3><p>前面讨论了这么多关于协议可靠性的问题，下面我们就一起讨论上面这个场景是在TCP中是怎么处理的。由于TCP的内容实在太多（《TCP/IP详解》中足足六大章，要知道UDP就一章），所以我们会分开几个模块讨论：</p>
+<ol>
+<li>TCP给互联网提供怎样的服务，TCP头部字段分别都有什么作用。</li>
+<li>TCP连接的建立与关闭。</li>
+<li>TCP是如何根据RTT估计重传超时的时间。</li>
+<li>TCP对于数据和窗口的处理。</li>
+<li>TCP拥塞控制的讨论。</li>
+<li>TCP在没有数据的时候保持连接。</li>
+</ol>
+<p>TCP原始的规范是[RFC0793]，部分错误在[RFC1122]中被修正。</p>
+<h3 id="TCP服务模型"><a href="#TCP服务模型" class="headerlink" title="TCP服务模型"></a>TCP服务模型</h3><p>TCP是一种<strong>面向连接</strong>的<strong>可靠的</strong>、基于<strong>字节流</strong>的<strong>传输层</strong>通信协议。面向连接的意思是，在TCP两个应用程序数据交换之前，必须先建立好TCP连接。字节流的意识是，不管发送方分几次每次写入多少字节，接收方都是可以自己选择读大小，同样发送方也可以自己选择写的大小。TCP是不会读取字节流里的字节内容，它不知道正在交换的数据字节是不是二进制，ASCII字符或者其他什么东西。对于字节流的解读取决于连接中每个端点的应用程序。</p>
+<h3 id="TCP中的可靠性"><a href="#TCP中的可靠性" class="headerlink" title="TCP中的可靠性"></a>TCP中的可靠性</h3><p>TCP提供一个字节流接口，TCP必须把一个发送应用程序的字节流转换成一组IP可以携带的分组。这个过程被称作<em><strong>组包</strong></em>（packetization）。分组包里面会有分组号，分组号实际上是每个分组第一个字节在整个字节流中的偏移量。应用程序的数据被打散成TCP认为的最佳大小，一般来说是按照每个报文段不会被分片的单个IP层数据报大小划分的。</p>
+<p>TCP维持了一个强制的校验和，校验和设计头部，所有相关的应用程序数据，IP头部所有字段。和UDP一样，有一个伪头部。如果校验和无效，TCP就会丢弃该数据包，并且不会做出任何回复，等待发送方重新发送。值得注意的是，接收方是有可能对一个已经被确认的报文进行重复确认，原因是帮助发送方更好地计算它的拥塞控制。大数据的充送，校验和是否足够强壮其实是存疑的，在《When The CRC and TCP Checksum Disagree》中有提到这个问题:<code>对于大约 1600 万到 100 亿分之一的数据包，校验和将无法检测到错误。</code>如果无法接受这种情况应用层可以考虑使用自己的差错保护方法。</p>
+<p>TCP发送一组报文时，通常会设置一个重传计时器。当然TCP不会为每一个报文设置重传计时器，一般是一个窗口的数据发出去之后只设置一个，当ACK到达时再更新超时。如果有一个没有按时收到，就会重发这个报文段。同样ACK也不会立刻发送，TCP的ACK是累计的，一个指示号是N的ACK意味着直到N的所有数据都已经被正确接收。这样还有一个好处就是，如果一个ACK丢失，后面的ACK也是可以确认前面的报文段的。</p>
+<p>TCP给应用程序提供的是<strong>双工</strong>服务。数据在两个方向上流动并且相互独立。两个方向分别维护一个自己的序列号，有了序列号TCP就可以实现丢弃重复的报文段和记录杂乱次序到达的报文段。</p>
+<h3 id="TCP头部和封装"><a href="#TCP头部和封装" class="headerlink" title="TCP头部和封装"></a>TCP头部和封装</h3><p>首先来看看TCP在IP数据报中的封装：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">				|&lt;-------- TCP数据报 --------------&gt;|</span><br><span class="line">+--------+--------+----------+------------------------+</span><br><span class="line">|     IPv4头部	  | TCP头部  |      TCP数据			   |</span><br><span class="line">| 20字节，不带IP选项 | 20字节   |                        |</span><br><span class="line">+--------+--------+----------+------------------------+</span><br><span class="line">|&lt;-------------------- IPv4数据报 --------------------&gt;|</span><br></pre></td></tr></table></figure>
+
+<p>TCP在IP数据报中基本上和UDP在IP数据报中结构是一样，UDP和TCP最大的区别就是在头部。下面来看一下TCP头部的结构：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"> 0                   1                   2                   3</span><br><span class="line"> 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|          Source Port          |       Destination Port        |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|                        Sequence Number                        |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|                    Acknowledgment Number                      |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|  Data |           |U|A|P|R|S|F|                               |</span><br><span class="line">| Offset| Reserved  |R|C|S|S|Y|I|            Window             |</span><br><span class="line">|       |           |G|K|H|T|N|N|                               |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|           Checksum            |         Urgent Pointer        |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|                    Options                    |    Padding    |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">|                             data                              |</span><br><span class="line">+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line"></span><br><span class="line">                         TCP Header Format</span><br></pre></td></tr></table></figure>
+
+<p>TCP头部包含了源和目的端口号，这两个值与IP头部中的源和目的IP唯一标识了每个连接。</p>
+<p><code>序列号（Sequence Nunber）</code>用来标识从TCP发端向TCP收端发送的数据字节流，它表示在这个报文段中的的第一个数据字节。如果将字节流看作在两个应用序间的单向流动，则TCP用序号对每个字节进行计数。序号是32 bit的无符号数，序号到达2^32－1后又从0开始。当建立一个新的连接时,SYN标志变1。序号字段包含由这个主机选择的该连接的初始序号ISN（Initial Sequence Number）。该主机要发送数据的第一个字节序号为这个ISN加1，因为SYN标志消耗了一个序号。</p>
+<p><code>确认号字段（Acknowledgment Number）</code>包含的值是该确认号的发送方期待接收的下一个序列号。即最后被成功接收的数据字节的序列号+1。ACK用于除了初始和末尾报文段之外的所有报文段。</p>
+<p><code>头部长度（Data Offset）</code>给出了TCP头部的长度，这个字段是必需的，因为选项字段的长度是可变的，TCP被限制为只能带60字节的头部。不带选项的长度为20字节。头部长度的作用是标识数据从哪里开始。</p>
+<p><code>保留位（Reserved）</code>这个在[rfc0793]中提到是给未来预留的，目前必须全部是0。</p>
+<p><code>URG</code>:  紧急指针字段<br><code>ACK</code>:  确认字段<br><code>PSH</code>:  推送<br><code>RST</code>:  重置<br><code>SYN</code>:  初始化一个链接的同步序列号<br><code>FIN</code>:  发送方结束发送数据</p>
+<p><code>窗口（window）</code>通知对方己方窗口大小。</p>
+<p><code>校验和（Checksum）</code>校验和覆盖了TCP头部和数据以及投不中的一些字段，计算方式基本和UDP是一样的。</p>
+<p><code>紧急指正（Urgent Pointer）</code>只有当URG标志置1时紧急指针才有效。紧急指针是一个正的偏移量，和序号字段中的值相加表示紧急数据最后一个字节的序号。 TCP的紧急方式是发送端向另一端发送紧急数据的一种方式。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本章和大家讨论什么是可靠协议以及可靠协议需要解决什么样的问题，介绍了TCP协议头以及TCP大概是怎么实现可靠性的。由于篇幅原因，本章很多内容都是先粗略提及，后面的章节会继续和大家分享。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/TCP-rfc793/" rel="tag"># TCP rfc793</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2021/07/15/network/" rel="next" title="UDP 用户数据报协议">
+                <i class="fa fa-chevron-left"></i> UDP 用户数据报协议
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2021/09/04/network-2/" rel="prev" title="TCP 传输控制协议(二、连接管理)">
+                TCP 传输控制协议(二、连接管理) <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7Carchive">
+              
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#TCP-%E4%BC%A0%E8%BE%93%E6%8E%A7%E5%88%B6%E5%8D%8F%E8%AE%AE-%E4%B8%80%E3%80%81%E5%88%9D%E6%AD%A5%E4%BA%86%E8%A7%A3"><span class="nav-number">1.</span> <span class="nav-text">TCP 传输控制协议(一、初步了解)</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">1.1.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ARQ%E5%92%8C%E9%87%8D%E4%BC%A0"><span class="nav-number">1.2.</span> <span class="nav-text">ARQ和重传</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AA%97%E5%8F%A3"><span class="nav-number">1.3.</span> <span class="nav-text">窗口</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E7%BB%84%E7%AA%97%E5%8F%A3%E5%92%8C%E7%AA%97%E5%8F%A3%E6%BB%91%E5%8A%A8"><span class="nav-number">1.3.1.</span> <span class="nav-text">分组窗口和窗口滑动</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E9%87%8F%E7%AA%97%E5%8F%A3-%E6%B5%81%E9%87%8F%E6%8E%A7%E5%88%B6%E5%92%8C%E6%8B%A5%E5%A1%9E%E6%8E%A7%E5%88%B6"><span class="nav-number">1.3.2.</span> <span class="nav-text">变量窗口:流量控制和拥塞控制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BE%E7%BD%AE%E9%87%8D%E4%BC%A0%E8%B6%85%E6%97%B6"><span class="nav-number">1.3.3.</span> <span class="nav-text">设置重传超时</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#TCP"><span class="nav-number">1.4.</span> <span class="nav-text">TCP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP%E5%BC%95%E5%85%A5"><span class="nav-number">1.4.1.</span> <span class="nav-text">TCP引入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP%E6%9C%8D%E5%8A%A1%E6%A8%A1%E5%9E%8B"><span class="nav-number">1.4.2.</span> <span class="nav-text">TCP服务模型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP%E4%B8%AD%E7%9A%84%E5%8F%AF%E9%9D%A0%E6%80%A7"><span class="nav-number">1.4.3.</span> <span class="nav-text">TCP中的可靠性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP%E5%A4%B4%E9%83%A8%E5%92%8C%E5%B0%81%E8%A3%85"><span class="nav-number">1.4.4.</span> <span class="nav-text">TCP头部和封装</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">1.5.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">姬凌伟</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
